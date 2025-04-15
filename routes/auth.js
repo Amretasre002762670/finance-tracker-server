@@ -51,6 +51,7 @@ router.post("/login", async (req, res) => {
     // store the token in local storage or session storage
     res.status(200).json({
       token: token,
+      id: user.id,
       username: user.userName,
       message: "Login successful",
     });
@@ -77,5 +78,38 @@ router.get("/getAll", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 })
+
+router.get("/getUserId/:username", authenticateToken, async(req, res) => {
+  const { username } = req.params;
+  try {
+    const userId = await User.findOne({ where: { userName: username } });
+    if (!userId) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json({
+      userId: userId.id,
+      message: "User ID retrieved successfully",
+    });
+  } catch (error) {
+    console.error("Error retrieving user:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.delete("/deleteUser/:id", authenticateToken, async (req, res) => { 
+  try {
+    const { id } = req.params;
+    const user = await User.findByPk(id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    await user.destroy();
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 module.exports = router;
